@@ -3,30 +3,22 @@ import sys
 import os
 import requests
 import json
-import ipaddress
+import socket
 
 config_file = "config.txt"
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
+
 def get_ip():
-        #Get external IP
-        try:
-          # Could be any service that just gives us a simple raw ASCII IP address (not HTML etc)
-          r = requests.get('https://api.ipify.org', timeout=3)
-        except Exception:
-          print('Failed to retrieve external IP.')
-          sys.exit(2)
-	if r.status_code != 200:
-          print('Failed to retrieve external IP. Server responded with status_code: %d' % r.status_code)
-          sys.exit(2)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return  unicode(ip, 'utf-8')
 
-        ip = r.text.rstrip() # strip \n and any trailing whitespace
-
-	if not(ipaddress.IPv4Address(ip)): # check if valid IPv4 address
-          sys.exit(2)
-
-        return ip
 
 def read_config(config_path):
         #Read configuration file
@@ -62,7 +54,7 @@ def main():
     sys.exit("Please fill in the 'config.txt' file.")
 
   for section in config.sections():
-  
+
     #Retrieve API key
     apikey = config.get(section, 'apikey')
 
